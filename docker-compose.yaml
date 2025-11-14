@@ -1,0 +1,92 @@
+version: "3.9"
+services:
+#================= Inferastructure Service =================#
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    volumes:
+      - "rabbitmq_data:/var/lib/rabbitmq"
+    networks:
+      - "saga-net"
+  sql-server:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    container_name: "sqlserver"
+    ports:
+     - "1433:1433"    
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y" 
+    networks:
+      - "saga-net"
+
+
+
+  email-service:
+    build:
+      context: .
+      dockerfile: EMailService/Dockerfile
+    container_name: email-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sql-server,1433;Database=EMails;User Id=sa;Password=YourStrong!Passw0rd;Encrypt=True;TrustServerCertificate=True;
+      - ConnectionStrings__RabbitMQ=rabbitmq://guest:guest@rabbitmq:5672
+    depends_on:
+      - notifications-service
+      - rabbitmq
+      - sql-server
+    ports:
+      - "5002:8080"
+    networks:
+      - saga-net
+
+  notifications-service:
+     build:
+      context: .
+      dockerfile: Notifications/Dockerfile
+     container_name: notifications-service
+     environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sql-server,1433;Database=Notifications;User Id=sa;Password=YourStrong!Passw0rd;Encrypt=True;TrustServerCertificate=True;
+      - ConnectionStrings__RabbitMQ=rabbitmq://guest:guest@rabbitmq:5672
+      
+ 
+     depends_on:
+      - rabbitmq
+      - sql-server
+     ports:
+      - "5001:8080"
+     networks:
+      - saga-net
+
+  auditing-service:
+    build:
+      context: .
+      dockerfile: Auditings/Dockerfile
+    container_name: auditing-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sql-server,1433;Database=Auditings;User Id=sa;Password=YourStrong!Passw0rd;Encrypt=True;TrustServerCertificate=True;
+      - ConnectionStrings__RabbitMQ=rabbitmq://guest:guest@rabbitmq:5672
+    depends_on:
+      - notifications-service
+      - rabbitmq
+      - sql-server
+    ports:
+      - "5003:8080"
+    networks:
+      - saga-net
+
+
+
+
+networks:  
+  saga-net:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
