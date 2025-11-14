@@ -1,0 +1,15 @@
+1-Here the Video demo for the project: https://www.loom.com/share/your-video-id
+2-Clone the repo from here : https://github.com/kmasaleh/3SEgyptSaga
+3-Cd to the solution folder
+4-Open terminal and run the following commands:
+5-docker compose up -d --build
+6-Wait for all services to be up and running
+7-You may use Docker desktop to monitor the containers and connect to swagger UI for each service
+8-You can use the following URLs to access the swagger UI for each service:
+	Notifications Service: http://localhost:5001/index.html
+	Email Service: http://localhost:5002/index.html
+	Auditing Service: http://localhost:5003/index.html
+9-You can use Postman to test the APIs
+10-To stop the services and remove it run:	docker compose down
+11-To restart the services run: docker compose up -d
+
